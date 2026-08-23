@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FutureDada AI</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #111827;
+    }
+
+    .app {
+      max-width: 700px;
+      margin: auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: white;
+      padding: 18px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 25px;
+    }
+
+    header p {
+      margin: 5px 0 0;
+      color: #666;
+    }
+
+    #chat {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .message {
+      padding: 12px 15px;
+      margin: 10px 0;
+      border-radius: 14px;
+      max-width: 85%;
+      white-space: pre-wrap;
+    }
+
+    .user {
+      margin-left: auto;
+      background: #2563eb;
+      color: white;
+    }
+
+    .ai {
+      background: white;
+      border: 1px solid #ddd;
+    }
+
+    .bottom {
+      background: white;
+      padding: 12px;
+      border-top: 1px solid #ddd;
+      display: flex;
+      gap: 8px;
+    }
+
+    #message {
+      flex: 1;
+      padding: 13px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 0 18px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <header>
+    <h1>🤖 FutureDada</h1>
+    <p>आपका AI Assistant</p>
+  </header>
+
+  <div id="chat">
+    <div class="message ai">
+      नमस्ते! 👋 मैं FutureDada हूँ। आप मुझसे कुछ भी पूछ सकते हैं।
+    </div>
+  </div>
+
+  <div class="bottom">
+    <input
+      id="message"
+      type="text"
+      placeholder="अपना सवाल लिखें..."
+      autocomplete="off"
+    >
+
+    <button id="send">Send</button>
+  </div>
+
+</div>
+
+<script>
+  const input = document.getElementById("message");
+  const sendButton = document.getElementById("send");
+  const chat = document.getElementById("chat");
+
+  function addMessage(text, type) {
+    const div = document.createElement("div");
+    div.className = "message " + type;
+    div.textContent = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  async function sendMessage() {
+    const message = input.value.trim();
+
+    if (!message) return;
+
+    addMessage(message, "user");
+
+    input.value = "";
+    sendButton.disabled = true;
+    sendButton.textContent = "Thinking...";
+
+    try {
+      const response = await fetch("/.netlify/functions/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: message,
+          language: "hi"
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "AI request failed");
+      }
+
+      addMessage(data.answer, "ai");
+
+    } catch (error) {
+      addMessage(
+        "⚠️ अभी AI से connection नहीं हो पाया। Backend/API settings check करें।",
+        "ai"
+      );
+    }
+
+    sendButton.disabled = false;
+    sendButton.textContent = "Send";
+    input.focus();
+  }
+
+  sendButton.addEventListener("click", sendMessage);
+
+  input.addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+      sendMessage();
+    }
+  });
+</script>
+
+</body>
+</html>
