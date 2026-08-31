@@ -54,6 +54,7 @@
       border-radius: 14px;
       max-width: 85%;
       white-space: pre-wrap;
+      word-wrap: break-word;
     }
 
     .user {
@@ -73,6 +74,8 @@
       border-top: 1px solid #ddd;
       display: flex;
       gap: 8px;
+      position: sticky;
+      bottom: 0;
     }
 
     #message {
@@ -96,6 +99,7 @@
 
     button:disabled {
       opacity: 0.6;
+      cursor: not-allowed;
     }
   </style>
 </head>
@@ -135,8 +139,10 @@
 
   function addMessage(text, type) {
     const div = document.createElement("div");
+
     div.className = "message " + type;
     div.textContent = text;
+
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
   }
@@ -144,7 +150,9 @@
   async function sendMessage() {
     const message = input.value.trim();
 
-    if (!message) return;
+    if (!message) {
+      return;
+    }
 
     addMessage(message, "user");
 
@@ -159,22 +167,29 @@
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          message: message,
-          language: "hi"
+          message: message
         })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "AI request failed");
+        throw new Error(
+          data.error || "AI request failed"
+        );
+      }
+
+      if (!data.answer) {
+        throw new Error("AI ने कोई जवाब नहीं दिया");
       }
 
       addMessage(data.answer, "ai");
 
     } catch (error) {
+      console.error("Chat error:", error);
+
       addMessage(
-        "⚠️ अभी AI से connection नहीं हो पाया। Backend/API settings check करें।",
+        "⚠️ AI से जवाब नहीं मिल पाया। कृपया थोड़ी देर बाद फिर कोशिश करें।",
         "ai"
       );
     }
